@@ -10,21 +10,16 @@ class App
   
   state do
     table :chars, [:char, :idx]
-    lmax :potions
+    table :potion_map, [:char] => [:no_of_potions]
+    table :counts, [:char] => [:occ]
+    table :potions
   end
 
   bloom :count_potions do
-    potions <= chars.reduce([0]) do |count, c|
-      case c.char
-      when 'B'
-        [count[0] + 1]
-      when 'C'
-        [count[0] + 3]
-      else
-        count
-      end
-    end
-    stdio <~ [[potions.reveal]]
+    potion_map <= [['A', 0], ['B', 1], ['C', 3]]
+    counts <= chars.group([:char], count)
+    potions <= (counts * potion_map).matches {|c, p| [c.char, c.occ * p.no_of_potions]}
+    stdio <~ potions.group([], sum(:val))
   end
 end
 
